@@ -63,7 +63,8 @@ public struct SyncEngine: Sendable {
             try await Task.sleep(for: config.delay)
             let folder = config.folderName(for: course)
             let sections = try await client.contents(courseID: course.id)
-            let catalog = RemoteCatalog.build(courseFolder: folder, sections: sections)
+            let coursePath = config.coursePath(for: course)
+            let catalog = RemoteCatalog.build(coursePath: coursePath, sections: sections)
             var manifest = try store.load(courseID: course.id) ?? Manifest(courseID: course.id, courseTitle: course.title)
 
             let plan = SyncPlanner.plan(remote: catalog.files, manifest: manifest) { relativePath in
@@ -73,7 +74,8 @@ public struct SyncEngine: Sendable {
             var result = CourseResult(course: course, folderName: folder, plan: plan, linkCount: catalog.links.count)
 
             if apply {
-                try await applyPlan(plan, links: catalog.links, folder: folder, to: &manifest, result: &result)
+                try await applyPlan(
+                    plan, links: catalog.links, coursePath: coursePath, title: folder, to: &manifest, result: &result)
             }
             report.courses.append(result)
         }
@@ -83,7 +85,8 @@ public struct SyncEngine: Sendable {
     private func applyPlan(
         _ plan: SyncPlan,
         links: [RemoteLink],
-        folder: String,
+        coursePath: [String],
+        title: String,
         to manifest: inout Manifest,
         result: inout CourseResult
     ) async throws {
@@ -135,9 +138,9 @@ public struct SyncEngine: Sendable {
 
         if !links.isEmpty {
             let linksFile = try SafePath.resolve(
-                SafePath.join([SafePath.sanitizeComponent(folder), "_enlaces.md"]), under: destination)
+                SafePath.join(coursePath + ["_enlaces.md"]), under: destination)
             try FileManager.default.createDirectory(at: linksFile.deletingLastPathComponent(), withIntermediateDirectories: true)
-            try Data(Reporter.linksMarkdown(courseTitle: folder, links: links).utf8).write(to: linksFile, options: .atomic)
+            try Data(Reporter.linksMarkdown(courseTitle: title, links: links).utf8).write(to: linksFile, options: .atomic)
         }
     }
 

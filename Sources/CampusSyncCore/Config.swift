@@ -12,6 +12,9 @@ public struct Config: Codable, Sendable, Equatable {
     public var aliases: [String: String]?
     public var maxFileSizeMB: Int?
     public var delayMilliseconds: Int?
+    /// Si está, el material de cada curso va a `<curso>/<subcarpeta>/` (p. ej. "Campus"), para que
+    /// conviva con el material propio dentro de la carpeta de cada materia.
+    public var courseSubfolder: String?
 
     public init(campusURL: String, destination: String) {
         self.campusURL = campusURL
@@ -100,5 +103,15 @@ public struct Config: Codable, Sendable, Equatable {
 
     public func folderName(for course: Course) -> String {
         aliases?[String(course.id)] ?? course.title
+    }
+
+    /// Componentes (ya saneados) de la carpeta de un curso, relativos al destino.
+    public func coursePath(for course: Course) -> [String] {
+        [SafePath.sanitizeComponent(folderName(for: course))] + Self.subfolderComponents(courseSubfolder)
+    }
+
+    static func subfolderComponents(_ subfolder: String?) -> [String] {
+        guard let subfolder, !subfolder.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        return [SafePath.sanitizeComponent(subfolder)]
     }
 }

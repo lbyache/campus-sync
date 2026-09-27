@@ -11,6 +11,9 @@ let usage = """
       campus-sync status            ¿Tengo todo? Compara campus y carpeta local. No descarga nada.
       campus-sync sync              Baja lo nuevo y lo modificado, escribe NOVEDADES.md y avisa.
       campus-sync logout            Borra el token del Llavero.
+      campus-sync reubicar [--destino RUTA] [--subcarpeta NOMBRE | --sin-subcarpeta] [--si]
+                                    Mueve lo ya bajado a otra carpeta o estructura sin volver a bajarlo.
+                                    Ej.: --subcarpeta Campus deja cada curso en <Materia>/Campus/.
 
     Configuración: ~/.config/campus-sync/config.json
     """
@@ -183,6 +186,70 @@ let interactive = isatty(STDIN_FILENO) == 1
     return report.failureCount > 0 ? 2 : 0
 }
 
+func value(after flag: String) -> String? {
+    guard let index = arguments.firstIndex(of: flag), arguments.indices.contains(index + 1) else { return nil }
+    return arguments[index + 1]
+}
+
+@MainActor func relocate() throws {
+    let config = try loadConfig()
+    let oldRoot = try config.existingDestinationDirectory()
+    let oldSubfolder = config.courseSubfolder
+    let newDestination = value(after: "--destino") ?? config.destination
+    let newSubfolder = arguments.contains("--sin-subcarpeta") ? nil : (value(after: "--subcarpeta") ?? oldSubfolder)
+
+    var newConfig = config
+    newConfig.destination = newDestination
+    newConfig.courseSubfolder = newSubfolder
+    let newRoot = try newConfig.existingDestinationDirectory()
+
+    let store = ManifestStore()
+    let manifests = try store.all()
+    let plan = try Relocator.plan(
+        manifests: manifests, from: oldRoot, to: newRoot, oldSubfolder: oldSubfolder, newSubfolder: newSubfolder)
+
+    print("De: \(oldRoot.path)\(oldSubfolder.map { " (subcarpeta \($0))" } ?? "")")
+    print("A:  \(newRoot.path)\(newSubfolder.map { " (subcarpeta \($0))" } ?? "")")
+    print("Archivos a mover: \(plan.moves.count)")
+    for move in plan.moves.prefix(5) { print("  \(move.from)\n    → \(move.to)") }
+    if plan.moves.count > 5 { print("  … y \(plan.moves.count - 5) más") }
+    if !plan.missing.isEmpty { print("No están en disco (se bajan en el próximo sync): \(plan.missing.count)") }
+    if !plan.conflicts.isEmpty {
+        print("Ya existen en el destino, no se mueve nada:")
+        for path in plan.conflicts.prefix(10) { print("  \(path)") }
+        throw CampusSyncError.config("resolvé esos \(plan.conflicts.count) conflictos y volvé a correr `campus-sync reubicar`.")
+    }
+    guard !plan.moves.isEmpty || newConfig != config else {
+        print("No hay nada que mover.")
+        return
+    }
+    if !arguments.contains("--si") {
+        guard prompt("¿Muevo \(plan.moves.count) archivos y actualizo la configuración? (s/N)").lowercased() == "s" else {
+            print("No se movió nada.")
+            return
+        }
+    }
+
+    let updated = try Relocator.execute(
+        plan, manifests: manifests, from: oldRoot, to: newRoot, oldSubfolder: oldSubfolder, newSubfolder: newSubfolder)
+    for manifest in updated { try store.save(manifest) }
+
+    let oldNovedades = oldRoot.appending(path: "NOVEDADES.md")
+    let newNovedades = newRoot.appending(path: "NOVEDADES.md")
+    if oldRoot.standardizedFileURL != newRoot.standardizedFileURL,
+        FileManager.default.fileExists(atPath: oldNovedades.path)
+    {
+        if FileManager.default.fileExists(atPath: newNovedades.path) {
+            print("Dejé NOVEDADES.md en \(oldRoot.path): ya había uno en el destino.")
+        } else {
+            try FileManager.default.moveItem(at: oldNovedades, to: newNovedades)
+        }
+    }
+    try newConfig.save()
+    Relocator.removeEmptyDirectories(after: plan.moves, under: oldRoot)
+    print("Listo: \(plan.moves.count) archivos movidos. Configuración actualizada. Corré `campus-sync status` para confirmar.")
+}
+
 @MainActor func logout() throws {
     let config = try loadConfig()
     let campus = try config.campus()
@@ -199,6 +266,7 @@ do {
     case "status": try await status()
     case "sync": exit(try await sync())
     case "logout": try logout()
+    case "reubicar": try relocate()
     case "help", "-h", "--help": print(usage)
     default:
         printError(usage)

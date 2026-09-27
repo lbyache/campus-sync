@@ -31,10 +31,12 @@ public struct RemoteCatalog: Sendable {
     /// Estructura local: `<Materia>/<NN Sección>/<archivo>` para un recurso de un
     /// solo archivo, y `<Materia>/<NN Sección>/<Módulo>/<subcarpetas>/<archivo>`
     /// para carpetas, páginas y recursos con varios archivos.
-    public static func build(courseFolder: String, sections: [CourseSection]) -> RemoteCatalog {
+    /// `coursePath` son los componentes de la carpeta del curso (p. ej. `["Análisis II", "Campus"]`);
+    /// se sanean acá igual, por si vienen de otro lado.
+    public static func build(coursePath: [String], sections: [CourseSection]) -> RemoteCatalog {
         var files: [RemoteFile] = []
         var links: [RemoteLink] = []
-        let materia = SafePath.sanitizeComponent(courseFolder)
+        let courseRoot = coursePath.map(SafePath.sanitizeComponent)
 
         for (index, section) in sections.enumerated() {
             let number = section.section ?? index
@@ -59,7 +61,7 @@ public struct RemoteCatalog: Sendable {
 
                 for content in downloadable {
                     guard let fileurl = content.fileurl, let filename = content.filename else { continue }
-                    var components = [materia, sectionFolder]
+                    var components = courseRoot + [sectionFolder]
                     if !flat {
                         components.append(SafePath.sanitizeComponent(moduleTitle))
                         components += SafePath.sanitizeDirectory(content.filepath)

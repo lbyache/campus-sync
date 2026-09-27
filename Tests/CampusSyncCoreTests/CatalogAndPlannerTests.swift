@@ -12,7 +12,7 @@ func fixtureSections() throws -> [CourseSection] {
 struct RemoteCatalogTests {
     @Test("Estructura de carpetas, módulos ocultos y enlaces")
     func buildsCatalog() throws {
-        let catalog = RemoteCatalog.build(courseFolder: "Análisis II", sections: try fixtureSections())
+        let catalog = RemoteCatalog.build(coursePath: ["Análisis II"], sections: try fixtureSections())
         let paths = catalog.files.map(\.relativePath)
 
         #expect(paths.contains("Análisis II/00 General/Programa 2026.pdf"))  // recurso de un archivo: plano
@@ -22,9 +22,29 @@ struct RemoteCatalogTests {
         #expect(catalog.links.map(\.name) == ["Video de la cátedra", "Enlace peligroso"])
     }
 
+    @Test("Con subcarpeta, el material va a <Materia>/<subcarpeta>/")
+    func buildsUnderSubfolder() throws {
+        var config = Config(campusURL: "https://campus.example.edu", destination: "/tmp")
+        config.courseSubfolder = "Campus"
+        config.aliases = ["7": "Análisis II"]
+        let path = config.coursePath(for: Course(id: 7, fullname: "ASIG0001 - Análisis Matemático II"))
+        #expect(path == ["Análisis II", "Campus"])
+        let catalog = RemoteCatalog.build(coursePath: path, sections: try fixtureSections())
+        #expect(catalog.files.allSatisfy { $0.relativePath.hasPrefix("Análisis II/Campus/") })
+    }
+
+    @Test("Una subcarpeta vacía o con separadores no rompe la ruta")
+    func subfolderIsSanitized() {
+        var config = Config(campusURL: "https://campus.example.edu", destination: "/tmp")
+        config.courseSubfolder = "  "
+        #expect(config.coursePath(for: Course(id: 1, fullname: "X")) == ["X"])
+        config.courseSubfolder = "../Campus"
+        #expect(config.coursePath(for: Course(id: 1, fullname: "X")) == ["X", "-Campus"])
+    }
+
     @Test("Un nombre malicioso queda contenido en la carpeta de la materia")
     func maliciousNameStaysInside() throws {
-        let catalog = RemoteCatalog.build(courseFolder: "Análisis II", sections: try fixtureSections())
+        let catalog = RemoteCatalog.build(coursePath: ["Análisis II"], sections: try fixtureSections())
         let hostile = try #require(catalog.files.first { $0.filename.contains("authorized_keys") })
         // ".." dentro de un nombre es inofensivo; lo peligroso es un componente ".." o vacío.
         let components = hostile.relativePath.split(separator: "/", omittingEmptySubsequences: false)

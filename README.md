@@ -48,6 +48,7 @@ campus-sync login               # URL del campus, carpeta destino, usuario y con
 campus-sync cursos              # tus cursos con su id
 campus-sync status              # ¿tengo todo? (no descarga)
 campus-sync sync                # baja lo pendiente
+campus-sync reubicar …          # mueve lo ya bajado a otra carpeta o estructura (ver abajo)
 ```
 
 - Si la institución usa SSO (entrar con Google o una cuenta institucional), `login` no acepta usuario
@@ -115,9 +116,23 @@ con un aviso de macOS y un mensaje en el log que dice cómo arreglarlo. El permi
 | `includeCourses` / `excludeCourses` | Listas de ids. |
 | `maxFileSizeMB` | Por defecto, 500. Lo que supere el límite se saltea y queda informado. |
 | `delayMilliseconds` | Pausa entre pedidos al servidor. Por defecto, 400. |
+| `courseSubfolder` | Si está (p. ej. `"Campus"`), cada curso va a `<Materia>/Campus/`, para que conviva con tu material propio en la carpeta de cada materia. |
 
 Un alias se lee cuando se descarga un archivo por primera vez. Los archivos ya bajados conservan su
 ruta, para que el espejo no se reordene solo.
+
+### Cambiar de carpeta o de estructura sin volver a bajar todo
+
+```bash
+campus-sync reubicar --destino "~/Library/CloudStorage/GoogleDrive-<cuenta>/Mi unidad/Estudio" --subcarpeta Campus
+```
+
+- Muestra qué va a mover y frena si algo ya existe en el destino.
+- Pide confirmación antes de tocar nada.
+- Mueve los archivos, sus versiones anteriores, `_enlaces.md` y `NOVEDADES.md`, y actualiza la
+  configuración.
+- Solo borra las carpetas que quedaron vacías por la mudanza.
+- `--sin-subcarpeta` vuelve a la estructura plana.
 
 ## Seguridad
 

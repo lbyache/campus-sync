@@ -63,6 +63,16 @@ public struct ManifestStore: Sendable {
         return try decoder.decode(Manifest.self, from: Data(contentsOf: url))
     }
 
+    /// Todos los manifiestos guardados, ordenados por id de curso.
+    public func all() throws -> [Manifest] {
+        guard FileManager.default.fileExists(atPath: directory.path) else { return [] }
+        return try FileManager.default.contentsOfDirectory(atPath: directory.path)
+            .filter { $0.hasSuffix(".json") }
+            .compactMap { Int(($0 as NSString).deletingPathExtension) }
+            .sorted()
+            .compactMap { try load(courseID: $0) }
+    }
+
     public func save(_ manifest: Manifest) throws {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let encoder = JSONEncoder()
