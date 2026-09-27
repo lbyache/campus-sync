@@ -1,0 +1,11 @@
+{
+  "campusURL" : "https://campus.example.edu",
+  "destination" : "~/Library/CloudStorage/GoogleDrive-tu-cuenta@example.com/Mi unidad/Campus",
+  "excludeCourses" : [ 1111 ],
+  "aliases" : {
+    "1234" : "Análisis II",
+    "5678" : "Física I"
+  },
+  "maxFileSizeMB" : 500,
+  "delayMilliseconds" : 400
+}

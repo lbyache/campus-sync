@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Solo lectura: el CI no necesita escribir en el repo ni usar secretos.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      # Acción oficial de GitHub, fijada al commit de v7.0.1 (un tag puede moverse; un SHA no).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Toolchain
+        run: swift --version
+
+      - name: Lint
+        run: swift format lint --strict -r Sources Tests Package.swift
+
+      - name: Build (release)
+        run: swift build -c release
+
+      - name: Tests
+        run: swift test

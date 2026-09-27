@@ -1,0 +1,117 @@
+[
+  {
+    "id": 10,
+    "name": "General",
+    "visible": 1,
+    "section": 0,
+    "modules": [
+      {
+        "id": 101,
+        "name": "Programa de la materia",
+        "modname": "resource",
+        "uservisible": true,
+        "contents": [
+          {
+            "type": "file",
+            "filename": "Programa 2026.pdf",
+            "filepath": "/",
+            "filesize": 120000,
+            "fileurl": "https://campus.example.edu/webservice/pluginfile.php/55/mod_resource/content/1/Programa%202026.pdf?forcedownload=1",
+            "timecreated": 1767000000,
+            "timemodified": 1767225600,
+            "mimetype": "application/pdf"
+          }
+        ]
+      },
+      {
+        "id": 102,
+        "name": "Foro de novedades",
+        "modname": "forum",
+        "uservisible": true
+      },
+      {
+        "id": 103,
+        "name": "Video de la cátedra",
+        "modname": "url",
+        "url": "https://campus.example.edu/mod/url/view.php?id=103",
+        "contents": [
+          {
+            "type": "url",
+            "filename": "Video de la cátedra",
+            "filepath": null,
+            "filesize": 0,
+            "fileurl": "https://www.youtube.com/watch?v=abc123",
+            "timemodified": 1767225600
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Unidad 1: Límites",
+    "section": 1,
+    "modules": [
+      {
+        "id": 201,
+        "name": "Material de la unidad",
+        "modname": "folder",
+        "contents": [
+          {
+            "type": "file",
+            "filename": "apunte.pdf",
+            "filepath": "/",
+            "filesize": 300000,
+            "fileurl": "https://campus.example.edu/webservice/pluginfile.php/60/mod_folder/content/0/apunte.pdf?forcedownload=1",
+            "timemodified": 1767312000
+          },
+          {
+            "type": "file",
+            "filename": "ejercicios.pdf",
+            "filepath": "/practica/",
+            "filesize": 90000,
+            "fileurl": "https://campus.example.edu/webservice/pluginfile.php/60/mod_folder/content/0/practica/ejercicios.pdf?forcedownload=1",
+            "timemodified": 1767312000
+          },
+          {
+            "type": "file",
+            "filename": "../../../.ssh/authorized_keys",
+            "filepath": "/../../",
+            "filesize": 10,
+            "fileurl": "https://campus.example.edu/webservice/pluginfile.php/60/mod_folder/content/0/x?forcedownload=1",
+            "timemodified": 1767312000
+          }
+        ]
+      },
+      {
+        "id": 202,
+        "name": "Oculto para estudiantes",
+        "modname": "resource",
+        "uservisible": false,
+        "contents": [
+          {
+            "type": "file",
+            "filename": "solucionario.pdf",
+            "filepath": "/",
+            "filesize": 1,
+            "fileurl": "https://campus.example.edu/webservice/pluginfile.php/61/mod_resource/content/1/solucionario.pdf",
+            "timemodified": 1767312000
+          }
+        ]
+      },
+      {
+        "id": 203,
+        "name": "Enlace peligroso",
+        "modname": "url",
+        "contents": [
+          {
+            "type": "url",
+            "filename": "x",
+            "fileurl": "javascript:alert(1)",
+            "timemodified": 1767312000
+          }
+        ]
+      }
+    ]
+  }
+]

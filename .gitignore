@@ -1,0 +1,8 @@
+.build/
+.swiftpm/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+.DS_Store
+# Configuración personal: vive en ~/.config, pero por si alguien la copia acá
+config.json
