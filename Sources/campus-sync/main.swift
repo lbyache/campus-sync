@@ -5,12 +5,17 @@ import Foundation
 let usage = """
     campus-sync — espejo local del campus Moodle
 
+    Primera vez: campus-sync setup   (configuración guiada, 5 preguntas)
+
     Uso:
+      campus-sync setup             Configuración guiada: campus, sesión, carpeta, cursos y frecuencia.
       campus-sync login [--token]   Guarda la sesión en el Llavero (la contraseña no se guarda).
       campus-sync cursos            Lista tus materias con su id (para alias y exclusiones).
       campus-sync status            ¿Tengo todo? Compara campus y carpeta local. No descarga nada.
       campus-sync sync              Baja lo nuevo y lo modificado, escribe NOVEDADES.md y avisa.
       campus-sync logout            Borra el token del Llavero.
+      campus-sync programar [--semanal | --diario | --manual]
+                                    Cada cuánto revisar novedades solo (por defecto, domingo 10:00).
       campus-sync reubicar [--destino RUTA] [--subcarpeta NOMBRE | --sin-subcarpeta] [--si]
                                     Mueve lo ya bajado a otra carpeta o estructura sin volver a bajarlo.
                                     Ej.: --subcarpeta Campus deja cada curso en <Materia>/Campus/.
@@ -113,21 +118,7 @@ let interactive = isatty(STDIN_FILENO) == 1
         }
     }
 
-    let token: String
-    if arguments.contains("--token") {
-        print("Token de Preferencias › Claves de seguridad del campus (servicio \"Moodle mobile web service\").")
-        guard let manual = readSecret("Token: ") else {
-            throw CampusSyncError.config("token vacío o sin terminal interactiva (el login se corre a mano en Terminal)")
-        }
-        token = manual
-    } else {
-        let username = prompt("Usuario del campus")
-        guard !username.isEmpty, let password = readSecret("Contraseña (no se muestra ni se guarda): ") else {
-            throw CampusSyncError.config(
-                "usuario o contraseña vacíos, o sin terminal interactiva (el login se corre a mano en Terminal)")
-        }
-        token = try await MoodleClient.requestToken(baseURL: campus, username: username, password: password)
-    }
+    let token = try await obtainToken(campus: campus, passwordLogin: true)
     redactor = Redactor(secrets: [token])
 
     let client = try MoodleClient(baseURL: campus, token: token)
@@ -260,7 +251,11 @@ func value(after flag: String) -> String? {
 // MARK: - Entrada
 
 do {
-    switch arguments.first ?? "help" {
+    // Sin argumentos y sin configuración, lo útil es la configuración guiada.
+    let noConfigYet = (try? Config.load()) == nil
+    switch arguments.first ?? (noConfigYet && interactive ? "setup" : "help") {
+    case "setup": try await setup()
+    case "programar": try programSchedule()
     case "login": try await login()
     case "cursos", "courses": try await courses()
     case "status": try await status()

@@ -12,7 +12,8 @@ toca tu credencial se puede leer entero. El porqué está en
 > files of your Moodle courses to a local folder using Moodle's official mobile Web Services API
 > (the same one the official app uses; no scraping). It detects new, modified and removed files,
 > keeps previous versions, never deletes anything locally, stores the token in the macOS Keychain,
-> and can run weekly or daily via `launchd`. Requirements, a legal notice and a security policy are
+> and can run weekly or daily via `launchd`. `campus-sync setup` walks you through everything in
+> five questions. Requirements, a legal notice and a security policy are
 > below and in [SECURITY.md](SECURITY.md). The documentation is in Spanish; issues and PRs in
 > English are welcome.
 
@@ -43,24 +44,33 @@ toca tu credencial se puede leer entero. El porqué está en
 ## Instalación y primer uso
 
 ```bash
-scripts/install.sh              # compila, instala en ~/.local/bin y programa el sync semanal (domingo 10:00)
-campus-sync login               # URL del campus, carpeta destino, usuario y contraseña
-campus-sync cursos              # tus cursos con su id
-campus-sync status              # ¿tengo todo? (no descarga)
-campus-sync sync                # baja lo pendiente
-campus-sync reubicar …          # mueve lo ya bajado a otra carpeta o estructura (ver abajo)
+scripts/install.sh              # compila e instala en ~/.local/bin (solo la primera vez o para actualizar)
+campus-sync setup               # configuración guiada: 5 preguntas y listo
 ```
 
-- Si la institución usa SSO (entrar con Google o una cuenta institucional), `login` no acepta usuario
-  y contraseña. Usá `campus-sync login --token` con el token de *Preferencias › Claves de seguridad*
-  del campus.
-- La carpeta de Google Drive para escritorio está en
-  `~/Library/CloudStorage/GoogleDrive-<cuenta>/Mi unidad/…`. Poné ahí la ruta local, no el link web
-  de la carpeta.
-- Frecuencia: `scripts/install.sh --semanal` (domingo 10:00, por defecto) o `--diario` (08:00).
-  Si la Mac está apagada o dormida a esa hora, corre cuando se despierta.
-- ¿No querés ninguna corrida automática? Después de instalar, corré
-  `launchctl bootout gui/$(id -u)/local.campus-sync` y usá `campus-sync sync` cuando quieras.
+`campus-sync setup` pregunta en lenguaje llano y no pide escribir rutas ni editar archivos:
+
+1. **Tu campus.** Aceptá cualquier dirección que veas en el navegador; la corrige y comprueba que el
+   campus permita la app móvil.
+2. **Tu usuario y contraseña.** La contraseña no se guarda. Si el campus usa SSO, te explica cómo
+   copiar la clave de acceso.
+3. **Dónde guardar.** Detecta Google Drive, OneDrive, Dropbox e iCloud Drive y te deja elegir por
+   número.
+4. **Qué cursos bajar.** Propone nombres cortos, por ejemplo "Algoritmos y Estructuras de Datos" en
+   lugar de "ASIG00194 - Algoritmos y Estructuras de Datos-2/2026".
+5. **Cada cuánto revisar novedades.** Semanal, diario o solo a mano.
+
+Al terminar ofrece bajar todo. Después:
+
+```bash
+campus-sync status              # ¿tengo todo? (no descarga)
+campus-sync sync                # buscar novedades ahora
+campus-sync programar --diario  # cambiar la frecuencia (--semanal, --diario o --manual)
+campus-sync reubicar …          # mover lo ya bajado a otra carpeta o estructura (ver abajo)
+```
+
+- Si la institución usa SSO, también está `campus-sync login --token`.
+- Si la Mac está apagada o dormida a la hora programada, la corrida se hace cuando se despierta.
 
 ### El Llavero y el pedido de contraseña de la Mac
 

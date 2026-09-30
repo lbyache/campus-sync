@@ -14,7 +14,8 @@ CLI en Swift que espeja el campus Moodle en una carpeta local. Decisión y alter
 | Lint | `swift format lint -r Sources Tests Package.swift` |
 | Formato | `swift format -i -r Sources Tests Package.swift` |
 | Run | `swift run campus-sync status` |
-| Instalar + launchd | `scripts/install.sh` (se corre a mano: modifica LaunchAgents) |
+| Instalar | `scripts/install.sh [--semanal \| --diario \| --manual]` (se corre a mano: instala el binario y programa la tarea con `campus-sync programar`) |
+| Configurar | `campus-sync setup` (interactivo; nunca desde un agente) |
 
 ## Architecture
 
@@ -23,6 +24,9 @@ CLI en Swift que espeja el campus Moodle en una carpeta local. Decisión y alter
 - **Lógica pura y testeable:** `SafePath` (saneo de rutas, CWE-22), `RemoteCatalog` (contenidos de
   Moodle → archivos y enlaces), `SyncPlanner` (nuevos, modificados, faltantes y retirados), `Redactor`,
   y el escape de `Reporter`.
+- **Asistente:** piezas puras en el core (`CampusURL`, `PublicSiteConfig`, `CourseNaming`,
+  `Selection`, `CloudFolders`, `LaunchAgent.plist`); la conversación interactiva vive en
+  `Sources/campus-sync/SetupWizard.swift`. `Relocator` mueve un espejo sin volver a descargar.
 - **Entrada/salida:** `MoodleClient` (Web Services REST, transporte inyectable para tests),
   `SyncEngine` (orquesta y descarga), `ManifestStore` (JSON por curso en Application Support),
   `Keychain`, `Config`.

@@ -1,7 +1,7 @@
 # 0002. Uso sin terminal y soporte para otros sistemas operativos
 
 ## Estado
-Accepted (2026-09-27). Se empieza por la fase 1.
+Accepted (2026-09-27). Fase 1 implementada (2026-09-30): `campus-sync setup` y `campus-sync programar`.
 
 ## Contexto
 
